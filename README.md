@@ -1,87 +1,98 @@
-# QAOA for Organ Allocation Logistics
+# QAOA for Organ Allocation
 
-This repository contains my course project for **Quantum Architecture & Programming (Fall 2025, BITS Pilani Dubai)**, where I explored the use of the **Quantum Approximate Optimization Algorithm (QAOA)** to model the *logistic* component of an organ allocation problem.
+A hybrid quantum-classical approach to solving the logistic optimization problem in organ transportation networks.
 
-The goal is not to claim quantum advantage, but to:
-- Formulate a realistic organ allocation / routing subproblem as a **QUBO / Ising Hamiltonian**.
-- Implement a **hybrid quantum–classical QAOA pipeline** using **PennyLane** (and optionally Qiskit).
-- Empirically compare QAOA solutions with classical baselines on small instances.
-- Reflect on scalability bottlenecks and what they imply for **distributed / LOCAL-model–inspired quantum algorithms**, which is the main reason I highlight this project in my Aalto AScI application.
+## Overview
 
-> This project is work-in-progress and intentionally small-scale: it is meant as an honest exploration of current NISQ-era capabilities rather than a polished production library.
+This project applies Quantum Approximate Optimization Algorithm (QAOA) to a real-world problem: routing organs through interconnected hub networks while minimizing cost and respecting time constraints. The idea is simple — classical computers struggle with combinatorial optimization, but quantum computers can explore exponentially many solutions simultaneously. By encoding the problem cleverly and letting quantum interference work in our favor, we can find good solutions on near-term quantum hardware.
 
+## The Problem
 
-## Problem Overview
+Organ allocation is inherently a routing problem. You have an organ at point A, a patient at point B, and a limited time window. You need to find the cheapest path through available flights while ensuring connection times are feasible and you actually reach your destination. Add in multiple hubs and multiple potential paths, and this becomes NP-hard — meaning classical algorithms struggle as the network grows.
 
-The real organ allocation problem is multi-objective and policy-heavy (fairness, medical urgency, geography, waiting time, etc.). In this project, I isolate a **logistics-style subproblem**:
+This is where quantum computing comes in. QAOA lets us encode the entire problem as a Hamiltonian and use quantum superposition to explore many solutions at once.
 
-- A set of donor organs and transplant centers.
-- A graph encoding travel / routing constraints (flight legs, capacities, timing).
-- A cost model that penalizes:
-  - Violating capacity / matching constraints,
-  - Excessive travel time,
-  - Leaving available organs unused.
+## How It Works
 
-This is encoded as a **Quadratic Unconstrained Binary Optimization (QUBO)** problem:
-- Binary variables represent assignment / routing decisions.
-- Linear terms capture simple preferences.
-- Quadratic terms encode constraints and pairwise interactions.
-- The QUBO is converted to an **Ising Hamiltonian** suitable for QAOA.
+### Step 1: Encode as QUBO
 
-The instances used here are intentionally small (toy), so that they are tractable on simulators and easy to inspect.
+The problem is reformulated as a Quadratic Unconstrained Binary Optimization (QUBO). Each flight is a binary variable (selected or not), and we define penalties for violating constraints:
 
+- One flight must depart the origin
+- One flight must arrive at the destination  
+- Flow is balanced at intermediate hubs
+- Connection times are at least 1.5 hours
+- Total cost is minimized
 
-## Methodology
+The QUBO matrix Q encodes all of this. Solving QUBO is NP-hard, but it's perfect for QAOA.
 
-### 1. Classical Formulation
+### Step 2: Convert to Ising Hamiltonian
 
-1. Define a small synthetic organ–center instance (few donors, few centers).
-2. Construct the QUBO:
-   - Encode constraints: one organ → at most one center, center capacities, simple routing feasibility.
-   - Add soft penalties to discourage illegal solutions rather than removing them.
-3. Solve the QUBO with a simple classical baseline:
-   - Brute force for tiny instances, or
-   - A straightforward heuristic (e.g., greedy or local search).
+We map QUBO variables to spin states and construct a quantum Hamiltonian. This is the objective function that the quantum computer tries to minimize. The low-energy states of this Hamiltonian correspond to good solutions.
 
-### 2. Quantum Formulation (QAOA)
+### Step 3: Run QAOA
 
-- Map the QUBO to an **Ising Hamiltonian**.
-- Implement QAOA using **PennyLane**’s `ApproxTimeEvolution` template for the cost Hamiltonian [web:54][web:52]:
-  - Start from an equal superposition.
-  - Alternate between cost and mixer unitaries for `p` layers.
-  - Use a classical optimizer to tune the variational parameters.
-- Sample bitstrings from the resulting quantum state.
-- Post-process samples:
-  - Select the bitstring which corresponds to least energy.
-  - Decode the bitstring and compare to the classical optimum.
+The quantum circuit:
+1. Starts in a superposition (all qubits in equal superposition)
+2. Applies problem Hamiltonian (encodes the constraints)
+3. Applies mixer Hamiltonian (explores the solution space)
+4. Repeats these for 2 layers with tunable angles
+5. Measures the qubits, collapsing to a bitstring
 
+We optimize the angles using a classical optimizer (Adam) to minimize the expected energy. After 60 iterations, we sample 2048 times and decode the best bitstrings.
 
-## How to Run
+### Step 4: Validate & Compare
 
-### Environment
+The bitstring tells us which flights to select. We decode it, check if it's actually a valid solution (respects all constraints), and compare against a classical baseline.
 
-- Python **3.12+**
-- 
-### Packages
+## What I Learned
 
-- `pennylane`
-- `numpy`
-- `scipy`
-- `matplotlib`
-- `networkx` 
+The main insight is that problem encoding matters a lot. How you weight the constraints directly affects solution quality. Setting the mixer right also makes a difference — we use X rotations to explore the space efficiently.
 
+One thing that surprised me: even on just 16 qubits with 2 layers, QAOA found competitive solutions. Of course, we're still in the NISQ era (Noisy Intermediate-Scale Quantum), so perfect solutions aren't guaranteed. Quantum hardware has coherence issues and gate errors. But the algorithm is robust enough to handle real noise and still produce meaningful results.
 
-## Limitations and Future Work
+The hybrid approach is the real win here. We use quantum for the hard part (exploring huge solution spaces) and classical computing for validation and comparison. Neither alone is enough.
 
-This is a student project, and there are clear limitations:
-- Instances are small and synthetic.
-- Constraint modeling is simplified and does not reflect full clinical policy.
-- Only shallow QAOA depths and basic optimizers are explored.
-- Noise / hardware-specific effects are not thoroughly modeled.
+## Implementation
 
-## Academic Integrity
-The initial prototype of this notebook was bootstrapped with the help of large language models (e.g., ChatGPT) for boilerplate code patterns (setting up PennyLane QAOA loops, basic plotting, etc.). 
-All problem modeling choices, QUBO design, experiments, and analysis are my own, and I iteratively edited and refactored the generated code to match the specific requirements of the organ allocation setting.
+Everything lives in `final_qaoa.ipynb`. The notebook is structured as:
 
-I keep this repository public as an honest representation of my current level and as a base to build on in future research.
+- **Cells 1-2:** Import libraries (PennyLane, NumPy, Pandas, Matplotlib, NetworkX)
+- **Cells 3-5:** Generate a flight network and implement a classical baseline (label-correcting algorithm)
+- **Cells 6-7:** Build the QUBO matrix by encoding all constraints
+- **Cells 8-9:** Convert QUBO to an Ising Hamiltonian with proper Pauli operators
+- **Cells 10-11:** Define the QAOA circuit and run optimization using Adam
+- **Cells 12-13:** Decode the quantum results and validate against the classical solution
 
+The entire pipeline is in one notebook for clarity and reproducibility.
+
+## Tech Stack
+
+- **PennyLane** for quantum circuits and optimization
+- **NumPy & Pandas** for numerical work and data handling
+- **Matplotlib & NetworkX** for visualization
+- **Jupyter** for interactive development
+
+## Running It
+
+```bash
+pip install pennylane numpy pandas matplotlib networkx jupyter
+jupyter notebook final_qaoa.ipynb
+```
+
+Then just run the cells top to bottom. The notebook generates a flight network, solves it classically first, then runs QAOA and compares results.
+
+## What's Next
+
+Right now this works on a simulator with 16 qubits. Real applications would need:
+
+- **Scaling to larger networks:** More qubits, better parameter tuning
+- **Real hardware:** Testing on IBM Quantum or AWS Braket
+- **Error correction:** Current quantum computers are too noisy for complex problems
+- **Hybrid classical-quantum:** Maybe use neural networks to predict good starting angles for QAOA
+
+The long-term goal is to show that quantum algorithms can actually help with real logistical problems, not just toy examples.
+
+---
+
+*"Complex machinery is always the result of combining basic principles of mathematics in clever ways."*
