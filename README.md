@@ -10,7 +10,6 @@ The goal is not to claim quantum advantage, but to:
 
 > This project is work-in-progress and intentionally small-scale: it is meant as an honest exploration of current NISQ-era capabilities rather than a polished production library.
 
----
 
 ## Problem Overview
 
@@ -31,7 +30,6 @@ This is encoded as a **Quadratic Unconstrained Binary Optimization (QUBO)** prob
 
 The instances used here are intentionally small (toy), so that they are tractable on simulators and easy to inspect.
 
----
 
 ## Methodology
 
@@ -57,7 +55,6 @@ The instances used here are intentionally small (toy), so that they are tractabl
   - Select the bitstring which corresponds to least energy.
   - Decode the bitstring and compare to the classical optimum.
 
----
 
 ## How to Run
 
@@ -73,7 +70,6 @@ The instances used here are intentionally small (toy), so that they are tractabl
 - `matplotlib`
 - `networkx` 
 
----
 
 ## Limitations and Future Work
 
