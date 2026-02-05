@@ -87,7 +87,7 @@ Then just run the cells top to bottom. The notebook generates a flight network, 
 Right now this works on a simulator with 16 qubits. Real applications would need:
 
 - **Scaling to larger networks:** More qubits, better parameter tuning
-- **Real hardware:** Testing on IBM Quantum or AWS Braket
+- **Real hardware:** Testing on IBM Quantum
 - **Error correction:** Current quantum computers are too noisy for complex problems
 - **Hybrid classical-quantum:** Maybe use neural networks to predict good starting angles for QAOA
 
@@ -102,8 +102,6 @@ This project used AI assistance at specific points, mostly where it was actually
 - **Documentation:** The README structure came from a template, but the actual insights are hand-written from experience running the code.
 - **Sanity checks:** I used AI to validate PennyLane syntax and make sure the Ising Hamiltonian mapping was correct.
 
-What wasn't AI: the problem formulation, the decision to use 2 layers vs 3, tuning the penalty weights through trial and error, realizing that connection time constraints needed a different encoding, and the actual learning about what works and what doesn't. That's all manual iteration.
 
-The takeaway is that AI fills the gaps where writing boilerplate by hand is tedious, but actual problem-solving still requires running code, interpreting results, and making informed choices. It's a productivity tool, not a substitute for thinking.
 
 
