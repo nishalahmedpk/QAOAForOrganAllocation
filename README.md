@@ -4,11 +4,11 @@ A hybrid quantum-classical approach to solving the logistic optimization problem
 
 ## Overview
 
-This project applies Quantum Approximate Optimization Algorithm (QAOA) to a real-world problem: routing organs through interconnected hub networks while minimizing cost and respecting time constraints. The idea is simple — classical computers struggle with combinatorial optimization, but quantum computers can explore exponentially many solutions simultaneously. By encoding the problem cleverly and letting quantum interference work in our favor, we can find good solutions on near-term quantum hardware.
+This project applies Quantum Approximate Optimization Algorithm (QAOA) to a real-world problem: routing organs through interconnected hub networks while minimizing cost and respecting time constraints. The idea is classical computers struggle with combinatorial optimization, but quantum computers can explore exponentially many solutions simultaneously. By encoding the problem cleverly and letting quantum interference work in our favor, we can find good solutions on near-term quantum hardware.
 
 ## The Problem
 
-Organ allocation is inherently a routing problem. You have an organ at point A, a patient at point B, and a limited time window. You need to find the cheapest path through available flights while ensuring connection times are feasible and you actually reach your destination. Add in multiple hubs and multiple potential paths, and this becomes NP-hard — meaning classical algorithms struggle as the network grows.
+Organ allocation is inherently a routing problem. You have an organ at point A, a patient at point B, and a limited time window. You need to find the cheapest path through available flights while ensuring connection times are feasible and you actually reach your destination. Add in multiple hubs and multiple potential paths, and this becomes NP-hard, meaning classical algorithms struggle as the network grows.
 
 This is where quantum computing comes in. QAOA lets us encode the entire problem as a Hamiltonian and use quantum superposition to explore many solutions at once.
 
@@ -47,7 +47,7 @@ The bitstring tells us which flights to select. We decode it, check if it's actu
 
 ## What I Learned
 
-The main insight is that problem encoding matters a lot. How you weight the constraints directly affects solution quality. Setting the mixer right also makes a difference — we use X rotations to explore the space efficiently.
+The main insight is that problem encoding matters a lot. How you weight the constraints directly affects solution quality. Setting the mixer right also makes a difference because we use X rotations to explore the space efficiently.
 
 One thing that surprised me: even on just 16 qubits with 2 layers, QAOA found competitive solutions. Of course, we're still in the NISQ era (Noisy Intermediate-Scale Quantum), so perfect solutions aren't guaranteed. Quantum hardware has coherence issues and gate errors. But the algorithm is robust enough to handle real noise and still produce meaningful results.
 
@@ -93,6 +93,17 @@ Right now this works on a simulator with 16 qubits. Real applications would need
 
 The long-term goal is to show that quantum algorithms can actually help with real logistical problems, not just toy examples.
 
----
+## On AI & Development
 
-*"Complex machinery is always the result of combining basic principles of mathematics in clever ways."*
+This project used AI assistance at specific points, mostly where it was actually useful rather than a shortcut:
+
+- **Scaffolding:** Boilerplate imports, basic NumPy operations, and the initial structure of the flight network generator were accelerated with AI. These are the repetitive parts that don't require novel thinking.
+- **Bug fixing:** When the constraint penalty weights weren't working right, I described the symptom and got debugging suggestions that pointed in the right direction (though I still had to verify and adjust the actual values).
+- **Documentation:** The README structure came from a template, but the actual insights are hand-written from experience running the code.
+- **Sanity checks:** I used AI to validate PennyLane syntax and make sure the Ising Hamiltonian mapping was correct.
+
+What wasn't AI: the problem formulation, the decision to use 2 layers vs 3, tuning the penalty weights through trial and error, realizing that connection time constraints needed a different encoding, and the actual learning about what works and what doesn't. That's all manual iteration.
+
+The takeaway is that AI fills the gaps where writing boilerplate by hand is tedious, but actual problem-solving still requires running code, interpreting results, and making informed choices. It's a productivity tool, not a substitute for thinking.
+
+
